@@ -1,0 +1,46 @@
+{
+  "name": "openup-signaling-server",
+  "version": "0.1.0",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --build",
+    "start": "ts-node main.ts"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": [
+          ".prettierrc"
+        ],
+        "options": {
+          "parser": "json"
+        }
+      }
+    ]
+  },
+  "dependencies": {
+    "buffer": "^6.0.3"
+  },
+  "devDependencies": {
+    "@roamhq/wrtc": "^0.9.1",
+    "@types/node": "22.13.10",
+    "@types/ws": "^8.18.1",
+    "prettier": "^3.5.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2",
+    "ws": "^8.19.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=14.x",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "npm",
+      "version": ">=7.x",
+      "onFail": "error"
+    }
+  }
+}
