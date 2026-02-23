@@ -10,7 +10,6 @@ import {
   SignalingMessageType,
   SignalingPeerList
 } from "../messages";
-import {generateRoomCode} from "../../../shared/room-code-generator";
 import {Buffer} from "buffer";
 
 interface ClientInfo {
@@ -28,6 +27,10 @@ enum CustomCloseCodes {
 const MaxMessageSize = 10000; // bytes
 const MaxConnectionsPerIp = 10;
 const MaxMessagesPerSeconds = 20;
+
+
+const RoomCodeCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const RoomCodeLength = 4;
 
 
 const server = new WebSocketServer({port: 3000});
@@ -132,6 +135,16 @@ function joinRoom(message: SignalingJoinRoom, socket: WebSocket, client: ClientI
   }
 
   joinRoomById(id, message.senderId, client);
+}
+
+function generateRoomCode() {
+  let code = '';
+
+  for (let i = 0; i < RoomCodeLength; i++) {
+    code += RoomCodeCharacters.charAt(Math.floor(Math.random() * RoomCodeCharacters.length));
+  }
+
+  return code
 }
 
 function joinOrCreateRoom(message: SignalingJoinOrCreateRoom, client: ClientInfo) {
