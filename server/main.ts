@@ -11,6 +11,7 @@ import {
   SignalingPeerList
 } from "../messages";
 import {Buffer} from "buffer";
+import * as crypto from "node:crypto";
 
 interface ClientInfo {
   socket: WebSocket;
