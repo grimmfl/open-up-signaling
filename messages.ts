@@ -1,5 +1,4 @@
 import {InvalidMessageException, ParseError} from "./exceptions";
-import {RTCIceCandidate} from "@roamhq/wrtc";
 import {Buffer} from "buffer";
 
 if (typeof window !== "undefined") {
