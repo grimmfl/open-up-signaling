@@ -2,12 +2,10 @@
 //import {WebSocket, Event, MessageEvent} from 'ws';
 import {SignalingMessage} from "../messages";
 
-const url = 'ws://localhost:3000';
-
 export class SignalingClient {
     private readonly socket: WebSocket;
 
-    constructor() {
+    constructor(url: string) {
         this.socket = new WebSocket(url);
     }
 
