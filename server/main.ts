@@ -8,7 +8,7 @@ import {
   SignalingLeaveRoom,
   SignalingMessage,
   SignalingMessageType,
-  SignalingPeerList
+  SignalingPeerList, SignalingPing
 } from "../messages";
 import {Buffer} from "buffer";
 import * as crypto from "node:crypto";
@@ -204,6 +204,9 @@ function handleMessage(message: SignalingMessage, socket: WebSocket) {
       forwardMessage(message);
       break;
 
+    case SignalingMessageType.Ping:
+      break;
+
     default:
       socket.close(CustomCloseCodes.INVALID_MESSAGE, 'Invalid message type')
       return;
@@ -273,6 +276,8 @@ function checkConnectionCount(socket: WebSocket, ip: string | undefined) {
 server.on('connection', (socket, request) => {
   if (!checkConnectionCount(socket, request.socket.remoteAddress)) return;
 
+  const interval = setInterval(() => socket.send(new SignalingPing('').toBuffer()), 5000);
+
   const clientId = crypto.randomUUID().toString();
 
   clients.set(clientId, {
@@ -321,5 +326,6 @@ server.on('connection', (socket, request) => {
 
   socket.on('close', () => {
     removeClient(clientId, request.socket.remoteAddress);
+    clearInterval(interval);
   })
 });

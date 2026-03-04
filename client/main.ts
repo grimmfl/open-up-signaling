@@ -1,12 +1,16 @@
 
 //import {WebSocket, Event, MessageEvent} from 'ws';
-import {SignalingMessage} from "../messages";
+import {SignalingMessage, SignalingPing} from "../messages";
 
 export class SignalingClient {
     private readonly socket: WebSocket;
 
     constructor(url: string) {
         this.socket = new WebSocket(url);
+
+        this.socket.addEventListener('close', event => {
+          console.log('closing', event.code, event.reason);
+        });
     }
 
     onOpen(callback: (event: Event) => {}) {

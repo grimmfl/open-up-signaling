@@ -15,7 +15,8 @@ export enum SignalingMessageType {
   JoinRoom = 6,
   LeaveRoom = 7,
   Error = 8,
-  JoinOrCreate = 9
+  JoinOrCreate = 9,
+  Ping = 10
 }
 
 interface SignalingContent {
@@ -70,6 +71,8 @@ export class SignalingMessage {
         return SignalingJoinOrCreateRoom.fromContent(content);
       case SignalingMessageType.Error:
         return SignalingError.fromContent(content);
+      case SignalingMessageType.Ping:
+        return SignalingPing.fromContent(content);
       default:
         throw new InvalidMessageException(`Invalid message type ${content.type}.`);
     }
@@ -415,5 +418,20 @@ export class SignalingError extends SignalingMessage {
       ...super.toContent(),
       errorMessage: this.message
     };
+  }
+}
+
+
+export class SignalingPing extends SignalingMessage {
+  constructor(senderId: string) {
+    super(SignalingMessageType.Ping, '', senderId);
+  }
+
+  static fromContent(content: SignalingContent): SignalingPing {
+    if (content.type != SignalingMessageType.Ping) {
+      throw new ParseError(`Expected message type ${SignalingMessageType.Ping} - got ${content.type}.`);
+    }
+
+    return new SignalingPing(content.senderId);
   }
 }
