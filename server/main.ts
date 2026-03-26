@@ -158,21 +158,31 @@ function joinOrCreateRoom(message: SignalingJoinOrCreateRoom, client: ClientInfo
   joinRoomById(message.roomId, message.senderId, client);
 }
 
+function deleteRoom(id: string) {
+  rooms.delete(id);
+
+  const code = roomIdToCode.get(id);
+
+  roomIdToCode.delete(id);
+
+  if (code != null) roomCodeToId.delete(code);
+}
+
 function leaveRoom(message: SignalingLeaveRoom, client: ClientInfo) {
-  const roomCode = client.roomId;
+  const roomId = client.roomId;
 
-  if (roomCode == null) return;
+  if (roomId == null) return;
 
-  const room = rooms.get(roomCode);
+  const room = rooms.get(roomId);
 
   if (room == null) return;
 
   room.splice(room.indexOf(message.senderId), 1);
 
   if (room.length === 0) {
-    rooms.delete(roomCode);
+    deleteRoom(roomId);
   } else {
-    broadcastPeerList(roomCode);
+    broadcastPeerList(roomId);
   }
 }
 
