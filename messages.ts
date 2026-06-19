@@ -16,7 +16,8 @@ export enum SignalingMessageType {
   LeaveRoom = 7,
   Error = 8,
   JoinOrCreate = 9,
-  Ping = 10
+  Ping = 10,
+  RequestClientId = 11,
 }
 
 interface SignalingContent {
@@ -73,6 +74,8 @@ export class SignalingMessage {
         return SignalingError.fromContent(content);
       case SignalingMessageType.Ping:
         return SignalingPing.fromContent(content);
+      case SignalingMessageType.RequestClientId:
+        return SignalingRequestClientId.fromContent(content);
       default:
         throw new InvalidMessageException(`Invalid message type ${content.type}.`);
     }
@@ -433,5 +436,30 @@ export class SignalingPing extends SignalingMessage {
     }
 
     return new SignalingPing(content.senderId);
+  }
+}
+
+export class SignalingRequestClientId extends SignalingMessage {
+  id: string | null;
+
+  constructor(targetId: string, senderId: string, id: string | null = null) {
+    super(SignalingMessageType.RequestClientId, targetId, senderId);
+
+    this.id = id;
+  }
+
+  static fromContent(content: SignalingContent): SignalingRequestClientId {
+    if (content.type != SignalingMessageType.RequestClientId) {
+      throw new ParseError(`Expected message type ${SignalingMessageType.RequestClientId} - got ${content.type}.`);
+    }
+
+    return new SignalingRequestClientId(content.targetId, content.senderId, content.clientId);
+  }
+
+  protected override toContent(): SignalingContent {
+    return {
+      ...super.toContent(),
+      clientId: this.id ?? undefined
+    };
   }
 }
