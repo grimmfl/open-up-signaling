@@ -14,6 +14,7 @@ import {
 } from "../messages";
 import {Buffer} from "buffer";
 import * as crypto from "node:crypto";
+import {IncomingMessage} from "node:http";
 
 interface ClientInfo {
   socket: WebSocket;
@@ -41,7 +42,7 @@ const server = new WebSocketServer({port: 3000});
 const connectionCounts = new Map<string, number>(); // ip to count
 
 const clients = new Map<string, ClientInfo>(); // client id to info
-const ipToClient = new Map<string, string>();
+const ipToPortToClient = new Map<string, Map<number, string>>();
 const rooms = new Map<string, string[]>(); // room id to client ids
 const roomCodeToId = new Map<string, string>();
 const roomIdToCode = new Map<string, string>();
@@ -189,7 +190,7 @@ function leaveRoom(message: SignalingLeaveRoom, client: ClientInfo) {
   }
 }
 
-function addClient(message: SignalingRequestClientId, socket: WebSocket, ip: string | undefined) {
+function addClient(message: SignalingRequestClientId, socket: WebSocket, request: IncomingMessage) {
   let id = message.id;
 
   if (id == null) {
@@ -200,7 +201,19 @@ function addClient(message: SignalingRequestClientId, socket: WebSocket, ip: str
     socket,
     roomId: null
   });
-  if (ip != null) ipToClient.set(ip, id);
+
+  const ip = request.socket.remoteAddress;
+  const port = request.socket.remotePort;
+  if (ip != null && port != null) {
+    let portToClient = ipToPortToClient.get(ip);
+
+    if (!portToClient) {
+      portToClient = new Map<number, string>();
+      ipToPortToClient.set(ip, portToClient);
+    }
+
+    portToClient.set(port, id);
+  }
 
   console.log(`Client ${id} connected.`);
 
@@ -208,11 +221,11 @@ function addClient(message: SignalingRequestClientId, socket: WebSocket, ip: str
 
 }
 
-function handleMessage(message: SignalingMessage, socket: WebSocket, ip: string | undefined) {
+function handleMessage(message: SignalingMessage, socket: WebSocket, request: IncomingMessage) {
   const sender  = clients.get(message.senderId);
 
   if (message.type === SignalingMessageType.RequestClientId) {
-    addClient(message as SignalingRequestClientId, socket, ip);
+    addClient(message as SignalingRequestClientId, socket, request);
   }
 
   if (sender == null) return;
@@ -251,10 +264,13 @@ function handleMessage(message: SignalingMessage, socket: WebSocket, ip: string 
   }
 }
 
-function removeClient(ip: string | undefined) {
-  if (ip == null) return;
+function removeClient(request: IncomingMessage) {
+  const ip = request.socket.remoteAddress;
+  const port =  request.socket.remotePort;
 
-  const clientId = ipToClient.get(ip);
+  if (ip == null || port == null) return;
+
+  const clientId = ipToPortToClient.get(ip)?.get(port);
 
   const count = (connectionCounts.get(ip) ?? 0) - 1;
   if (count <= 0) connectionCounts.delete(ip);
@@ -351,12 +367,12 @@ server.on('connection', (socket, request) => {
     }
 
     for (const message of messages) {
-      handleMessage(message, socket, request.socket.remoteAddress);
+      handleMessage(message, socket, request);
     }
   });
 
   socket.on('close', () => {
-    removeClient(request.socket.remoteAddress);
+    removeClient(request);
     clearInterval(interval);
   })
 });
