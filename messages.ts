@@ -1,5 +1,5 @@
 import {InvalidMessageException, ParseError} from "./exceptions";
-import {Buffer} from "buffer";
+import {Buffer, Blob as NodeBlob} from "buffer";
 
 if (typeof window !== "undefined") {
   window.Buffer = Buffer;
@@ -82,11 +82,11 @@ export class SignalingMessage {
   }
 
   static async fromBuffer(buffer: Buffer | ArrayBuffer | Blob) {
-    if (buffer instanceof Blob) {
+    if (typeof window !== 'undefined' && buffer instanceof Blob) {
       buffer = await buffer.arrayBuffer();
     }
 
-    return SignalingMessage.fromJson(new TextDecoder('utf-8').decode(buffer));
+    return SignalingMessage.fromJson(new TextDecoder('utf-8').decode(buffer as AllowSharedBufferSource));
   }
 
   static async parseMessage(data: string | Buffer | ArrayBuffer | Buffer[]) {
