@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc --build",
-    "start": "ts-node main.ts"
+    "start": "node --env-file-if-exists=.env -r ts-node/register main.ts"
   },
   "prettier": {
     "singleQuote": true,
@@ -20,7 +20,8 @@
     ]
   },
   "dependencies": {
-    "buffer": "^6.0.3"
+    "buffer": "^6.0.3",
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "@roamhq/wrtc": "^0.9.1",
@@ -28,8 +29,7 @@
     "@types/ws": "^8.18.1",
     "prettier": "^3.5.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.2",
-    "ws": "^8.19.0"
+    "typescript": "^5.8.2"
   },
   "devEngines": {
     "runtime": {

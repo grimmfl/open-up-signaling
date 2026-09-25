@@ -21,11 +21,11 @@ interface ClientInfo {
   roomId: string | null;
 }
 
-enum CustomCloseCodes {
-  UNKNOWN_ORIGIN = 4000,
-  INVALID_MESSAGE = 4002,
-  TOO_MANY_CONNECTIONS = 4029,
-  RATE_LIMIT_EXCEEDED = 4030
+class CustomCloseCodes {
+  public static readonly UNKNOWN_ORIGIN = 4000;
+  public static readonly INVALID_MESSAGE = 4002;
+  public static readonly TOO_MANY_CONNECTIONS = 4029;
+  public static readonly RATE_LIMIT_EXCEEDED = 4030;
 }
 
 const MaxMessageSize = 10000; // bytes
@@ -37,7 +37,9 @@ const RoomCodeCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const RoomCodeLength = 4;
 
 
-const server = new WebSocketServer({port: 3000});
+console.log(process.env);
+const port = process.env.PORT != null ? parseInt(process.env.PORT, 10) : 3000;
+const server = new WebSocketServer({port});
 
 const connectionCounts = new Map<string, number>(); // ip to count
 
@@ -190,6 +192,40 @@ function leaveRoom(message: SignalingLeaveRoom, client: ClientInfo) {
   }
 }
 
+function generateTurnCredentials() {
+  if (process.env.TURN_ENABLED !== "1") {
+    return [null, null, null];
+  }
+
+  const url = process.env.TURN_URL;
+  const secret = process.env.TURN_SECRET;
+
+  if (url == null) {
+    console.error("TURN_URL not provided. Signaling is started without turn.")
+    return [null, null, null];
+  }
+
+  if (secret == null) {
+    console.error('SECRET_URL not provided. Signaling is started without turn.');
+    return [null, null, null];
+  }
+
+  const TTL = 3600 * 4; // 4 hours in seconds
+
+  // seconds since epoch + ttl
+  const expiry = Math.floor(new Date().getTime() / 1000) + TTL;
+  // random 4 bytes of hexadecimal string (e.g. ffffffff)
+  const token = crypto.randomBytes(4).toString('hex');
+
+  const username = `${expiry}:${token}`;
+  const password = crypto
+    .createHmac('sha1', process.env.TURN_SECRET!)
+    .update(username)
+    .digest('base64');
+
+  return [`${process.env.TURN_URL!}`, username, password];
+}
+
 function addClient(message: SignalingRequestClientId, socket: WebSocket, request: IncomingMessage) {
   let id = message.id;
 
@@ -217,8 +253,9 @@ function addClient(message: SignalingRequestClientId, socket: WebSocket, request
 
   console.log(`Client ${id} connected.`);
 
-  socket.send(new SignalingClientId(id, '', id).toBuffer());
+  const [url, username, password] = generateTurnCredentials();
 
+  socket.send(new SignalingClientId(id, '', id, url, username, password).toBuffer());
 }
 
 function handleMessage(message: SignalingMessage, socket: WebSocket, request: IncomingMessage) {

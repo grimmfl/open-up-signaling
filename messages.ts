@@ -33,6 +33,9 @@ interface SignalingContent {
   roomCode?: string;
   roomId?: string;
   errorMessage?: string;
+  turnUrl?: string | null;
+  turnUsername?: string | null;
+  turnPassword?: string | null;
 }
 
 export class SignalingMessage {
@@ -216,11 +219,17 @@ export class SignalingIceCandidate extends SignalingMessage {
 
 export class SignalingClientId extends SignalingMessage {
   id: string;
+  turnUrl: string | null;
+  turnUsername: string | null;
+  turnPassword: string | null;
 
-  constructor(targetId: string, senderId: string, id: string) {
+  constructor(targetId: string, senderId: string, id: string, turnUrl: string | null, turnUsername: string | null, turnPassword: string | null) {
     super(SignalingMessageType.ClientId, targetId, senderId);
 
     this.id = id;
+    this.turnUrl = turnUrl;
+    this.turnUsername = turnUsername;
+    this.turnPassword = turnPassword;
   }
 
   static fromContent(content: SignalingContent): SignalingClientId {
@@ -232,13 +241,16 @@ export class SignalingClientId extends SignalingMessage {
       throw new InvalidMessageException('Id is required.');
     }
 
-    return new SignalingClientId(content.targetId, content.senderId, content.clientId);
+    return new SignalingClientId(content.targetId, content.senderId, content.clientId, content.turnUrl ?? null, content.turnUsername ?? null, content.turnPassword ?? null);
   }
 
   protected override toContent(): SignalingContent {
     return {
       ...super.toContent(),
-      clientId: this.id
+      clientId: this.id,
+      turnUrl: this.turnUrl,
+      turnUsername: this.turnUsername,
+      turnPassword: this.turnPassword
     };
   }
 }
