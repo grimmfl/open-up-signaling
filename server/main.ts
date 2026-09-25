@@ -36,8 +36,6 @@ const MaxMessagesPerSeconds = 20;
 const RoomCodeCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const RoomCodeLength = 4;
 
-
-console.log(process.env);
 const port = process.env.PORT != null ? parseInt(process.env.PORT, 10) : 3000;
 const server = new WebSocketServer({port});
 
